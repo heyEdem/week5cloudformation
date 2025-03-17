@@ -488,7 +488,7 @@ Resources:
       Tags:
         - Key: Name
           Value: PublicSubnet1
-  # Public subnet 2
+  # Public submet 2
   PublicSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
@@ -598,7 +598,7 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: tag-finder-log-group
-  # ECS Task Definition
+  # ECS Task Definition 
   ECSTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
@@ -641,8 +641,8 @@ Resources:
           ToPort: 5000
           CidrIp: 0.0.0.0/0
         - IpProtocol: tcp
-          FromPort: 5000
-          ToPort: 5000
+          FromPort: 5001
+          ToPort: 5001
           CidrIp: 0.0.0.0/0
       SecurityGroupEgress:
         - IpProtocol: -1
@@ -710,7 +710,7 @@ Resources:
         - Type: forward
           TargetGroupArn: !Ref GreenTargetGroup
       LoadBalancerArn: !Ref TagFinderLoadBalancer
-      Port: 5000
+      Port: 5001
       Protocol: HTTP
   # Production listener (initially points to blue environment)
   ProductionListener:
@@ -862,4 +862,3 @@ Outputs:
   CodeDeployGroupName:
     Description: CodeDeploy Deployment Group Name
     Value: !Ref DeploymentGroup
-  
