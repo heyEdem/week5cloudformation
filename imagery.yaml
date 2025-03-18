@@ -476,7 +476,7 @@ Resources:
       EnableDnsHostnames: true
       Tags:
         - Key: Name
-          Value: Tag-Finder-VPC
+          Value: Imagery-VPC
   # Public Subnets
   PublicSubnet1:
     Type: AWS::EC2::Subnet
@@ -533,10 +533,10 @@ Resources:
       SubnetId: !Ref PublicSubnet2
       RouteTableId: !Ref PublicRouteTable
   # ECS Cluster
-  TagFinderCluster:
+  ImageryCluster:
     Type: AWS::ECS::Cluster
     Properties:
-      ClusterName: TagFinderCluster
+      ClusterName: ImageryCluster
   # Task Execution Role
   TaskExecutionRole:
     Type: AWS::IAM::Role
@@ -597,12 +597,12 @@ Resources:
   ECSLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: tag-finder-log-group
+      LogGroupName: Imagery-log-group
   # ECS Task Definition 
   ECSTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: tag-finder-task
+      Family: Imagery-task
       RequiresCompatibilities:
         - FARGATE
       Cpu: '2048'
@@ -611,7 +611,7 @@ Resources:
       ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
       TaskRoleArn: !GetAtt S3AccessRole.Arn
       ContainerDefinitions:
-        - Name: tag-finder-container
+        - Name: Imagery-container
           Essential: true
           Image: public.ecr.aws/r1b3l1w9/imagery:latest
           PortMappings:
@@ -619,7 +619,7 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: tag-finder-log-group
+              awslogs-group: Imagery-log-group
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: ecs
   LoadBalancerSecurityGroup:
@@ -661,10 +661,10 @@ Resources:
         - IpProtocol: -1
           CidrIp: 0.0.0.0/0
   # Application Load Balancer
-  TagFinderLoadBalancer:
+  ImageryLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: tag-finder-load-balancer
+      Name: Imagery-load-balancer
       Subnets:
         - !Ref PublicSubnet1
         - !Ref PublicSubnet2
@@ -676,7 +676,7 @@ Resources:
   BlueTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: tag-finder-blue-target
+      Name: Imagery-blue-target
       Port: 5000
       Protocol: HTTP
       VpcId: !Ref VPC
@@ -691,7 +691,7 @@ Resources:
   GreenTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: tag-finder-green-target
+      Name: Imagery-green-target
       Port: 5000
       Protocol: HTTP
       VpcId: !Ref VPC
@@ -709,7 +709,7 @@ Resources:
       DefaultActions:
         - Type: forward
           TargetGroupArn: !Ref GreenTargetGroup
-      LoadBalancerArn: !Ref TagFinderLoadBalancer
+      LoadBalancerArn: !Ref ImageryLoadBalancer
       Port: 5001
       Protocol: HTTP
   # Production listener (initially points to blue environment)
@@ -719,15 +719,15 @@ Resources:
       DefaultActions:
         - Type: forward
           TargetGroupArn: !Ref BlueTargetGroup
-      LoadBalancerArn: !Ref TagFinderLoadBalancer
+      LoadBalancerArn: !Ref ImageryLoadBalancer
       Port: 80
       Protocol: HTTP
   # ECS Service
   ECSService:
     Type: AWS::ECS::Service
     Properties:
-      ServiceName: tag-finder-service
-      Cluster: !Ref TagFinderCluster
+      ServiceName: Imagery-service
+      Cluster: !Ref ImageryCluster
       TaskDefinition: !Ref ECSTaskDefinition
       LaunchType: FARGATE
       SchedulingStrategy: REPLICA
@@ -743,7 +743,7 @@ Resources:
             - !Ref ECSServiceSecurityGroup
       LoadBalancers:
         - TargetGroupArn: !Ref BlueTargetGroup
-          ContainerName: tag-finder-container
+          ContainerName: Imagery-container
           ContainerPort: 5000
       PropagateTags: SERVICE
       EnableECSManagedTags: true
@@ -793,7 +793,7 @@ Resources:
       ResourceId: !Join
         - '/'
         - - service
-          - !Ref TagFinderCluster
+          - !Ref ImageryCluster
           - !GetAtt ECSService.Name
       RoleARN: !GetAtt ECSAutoScalingRole.Arn
       ScalableDimension: ecs:service:DesiredCount
@@ -815,7 +815,7 @@ Resources:
   CodeDeployApplication:
     Type: AWS::CodeDeploy::Application
     Properties:
-      ApplicationName: tag-finder-application
+      ApplicationName: Imagery-application
       ComputePlatform: ECS
   # CodeDeploy Deployment Group
   DeploymentGroup:
@@ -824,7 +824,7 @@ Resources:
       ApplicationName: !Ref CodeDeployApplication
       ServiceRoleArn: !GetAtt CodeDeployServiceRole.Arn
       DeploymentConfigName: CodeDeployDefault.ECSAllAtOnce
-      DeploymentGroupName: tag-finder-deployment-group
+      DeploymentGroupName: Imagery-deployment-group
       DeploymentStyle:
         DeploymentType: BLUE_GREEN
         DeploymentOption: WITH_TRAFFIC_CONTROL
@@ -836,7 +836,7 @@ Resources:
           Action: TERMINATE
           TerminationWaitTimeInMinutes: 5
       ECSServices:
-        - ClusterName: !Ref TagFinderCluster
+        - ClusterName: !Ref ImageryCluster
           ServiceName: !GetAtt ECSService.Name
       LoadBalancerInfo:
         TargetGroupPairInfoList:
@@ -850,12 +850,12 @@ Resources:
               - Name: !GetAtt BlueTargetGroup.TargetGroupName
               - Name: !GetAtt GreenTargetGroup.TargetGroupName
 Outputs:
-  TagFinderLoadBalancerDNS:
+  ImageryLoadBalancerDNS:
     Description: The DNS name of the load balancer
-    Value: !GetAtt TagFinderLoadBalancer.DNSName
-  TagFinderLoadBalancerURL:
+    Value: !GetAtt ImageryLoadBalancer.DNSName
+  ImageryLoadBalancerURL:
     Description: URL of the load balancer
-    Value: !Join ['', ['http://', !GetAtt TagFinderLoadBalancer.DNSName]]
+    Value: !Join ['', ['http://', !GetAtt ImageryLoadBalancer.DNSName]]
   CodeDeployAppName:
     Description: CodeDeploy Application Name for ECS Blue-Green Deployments
     Value: !Ref CodeDeployApplication
