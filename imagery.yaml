@@ -557,13 +557,15 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - ecr:GetAuthorizationToken,
+                  - ecr:GetAuthorizationToken
                   - ecr:BatchCheckLayerAvailability
                   - ecr:GetDownloadUrlForLayer
                   - ecr:BatchGetImage
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource: '*'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
   S3AccessRole:
     Type: AWS::IAM::Role
     Properties:
@@ -598,7 +600,7 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: Imagery-log-group
-  # ECS Task Definition 
+  # ECS Task Definition
   ECSTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
