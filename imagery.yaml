@@ -498,7 +498,19 @@ Resources:
       AvailabilityZone: !Select [ 1, !GetAZs "" ]
       Tags:
         - Key: Name
-          Value: PublicSubnet2
+          Value: PublicSubnet2#
+            
+  # Public subnet 2
+  Private Subnet 1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.3.0/24
+#      MapPublicIpOnLaunch: true
+      AvailabilityZone: !Select [ 1, !GetAZs "" ]
+      Tags:
+        - Key: Name
+          Value: PrivateSubnet
   # Internet Gateway
   InternetGateway:
     Type: AWS::EC2::InternetGateway
